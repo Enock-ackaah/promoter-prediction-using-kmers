@@ -34,14 +34,6 @@ Using a labeled *E. coli* promoter dataset (1,000 sequences), DNA sequences were
 
 Top-ranking k-mers were **AT-rich motifs** such as `AAAA`, `TATA`, `TAAA`, and `ATAA`, consistent with known bacterial promoter elements (e.g., the −10 Pribnow box).
 
-## Results
-
-### Confusion Matrix
-![Confusion Matrix](figures/confusion_matrix.png)
-
-### Top 20 Most Important k-mers
-![Top 20 k-mers](figures/top20_kmers.png)
-
 
 ---
 
