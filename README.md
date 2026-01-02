@@ -1,58 +1,124 @@
-# promoter-prediction-using-kmers
-Machine learning–based promoter prediction using k-mer encoding and Random Forest
-# Promoter Prediction Using Machine Learning
+# Tumor vs Normal Classification Using DNA Methylation
 
-This project investigates whether machine-learning models can identify promoter regions directly from raw DNA sequence data.
+This project investigates whether genome-wide DNA methylation profiles can distinguish colon adenocarcinoma tissue from normal colon tissue using interpretable statistical and machine-learning models.
 
-Using a labeled *E. coli* promoter dataset (1,000 sequences), DNA sequences were transformed into numerical features via **4-mer (k-mer) frequency encoding**, and a **Random Forest classifier** was trained to distinguish promoter from non-promoter regions.
+Using publicly available Illumina HumanMethylation450 data, DNA methylation beta values were analyzed and regularized logistic regression models were trained to identify robust CpG-level epigenetic biomarkers associated with tumor status.
 
 ---
 
 ## Dataset
-- Organism: *Escherichia coli*
-- Samples: 1,000 DNA sequences
-- Labels:
-  - `1` → Promoter
-  - `0` → Non-Promoter
-- Input: Fixed-length DNA sequences (A, C, G, T)
+
+- **Source:** Gene Expression Omnibus (GEO)
+- **Accession:** GSE42752
+- **Organism:** *Homo sapiens*
+- **Platform:** Illumina HumanMethylation450 BeadChip
+- **Samples:** 63 colon tissue samples
+- **Labels:**
+  - `1` → Tumor (colon adenocarcinoma)
+  - `0` → Normal (including cancer-unrelated normal tissue)
+- **Input:** DNA methylation beta values (range: 0–1) at ~450,000 CpG sites
+
+---
+
+## Study Design
+
+This study adopts a supervised classification framework to evaluate whether DNA methylation patterns can reliably separate tumor from normal colon tissue. The analysis emphasizes interpretability, robustness, and suitability for high-dimensional epigenomic data.
+
+---
+
+## Data Loading and Preprocessing
+
+- Loaded GEO series matrix files using the **GEOquery** package
+- Retained only CpG probes with identifiers beginning with `"cg"`
+- Enforced numeric data types and validated beta value ranges
+- Parsed phenotype metadata to assign tumor vs normal labels
+- Excluded ambiguous or mislabeled samples
+
+---
+
+## Feature Reduction
+
+Given the high-dimensional nature of DNA methylation data (p ≫ n), variance-based feature filtering was applied prior to modeling.
+
+- CpG-wise variance was computed across samples
+- The **top 10,000 most variable CpG sites** were retained
+- This step reduces noise and improves numerical stability while preserving biologically informative features
+
+---
+
+## Handling Missing and Invalid Values
+
+- Removed CpG features with zero variance
+- Replaced non-finite values (NA, NaN, Inf) using CpG-wise mean imputation
+- Verified that the final design matrix contained no missing or invalid values prior to modeling
 
 ---
 
 ## Methods
-- **Sequence encoding:** Overlapping 4-mer frequency vectors (256 features)
-- **Model:** Random Forest
-- **Evaluation:** Stratified train/test split (80/20), confusion matrix, ROC–AUC
-- **Interpretation:** Feature importance (Mean Decrease Gini)
+
+### LASSO Logistic Regression
+
+- Regularized logistic regression with L1 penalty
+- Automatic feature selection
+- Five-fold cross-validation
+- Performance metric: Area Under the ROC Curve (AUC)
+- Conservative model selection using the **λ₁SE** criterion
+
+### Elastic Net Logistic Regression
+
+- Combined L1 and L2 penalties (α = 0.5)
+- Allows correlated CpG features to be selected together
+- Used to assess robustness of feature selection and model performance
 
 ---
 
 ## Results
-- Accuracy: ~96%
-- ROC–AUC: ~0.97
-- Sensitivity (Promoter): 100%
-- Specificity (Non-Promoter): ~92%
 
-Top-ranking k-mers were **AT-rich motifs** such as `AAAA`, `TATA`, `TAAA`, and `ATAA`, consistent with known bacterial promoter elements (e.g., the −10 Pribnow box).
+- **LASSO Logistic Regression**
+  - Cross-validated AUC: **1.0**
+  - Selected **1 CpG site** (cg16601494)
 
+- **Elastic Net Logistic Regression**
+  - Cross-validated AUC: **1.0**
+  - Selected **8 CpG sites**
+  - cg16601494 consistently retained
 
----
-
-## Repository Contents
-- `scripts/` – R code for data processing, modeling, and visualization
-- `figures/` – Confusion matrix and k-mer importance plots
-- `data/` – Promoter dataset (if permitted)
+Cross-validation curves demonstrated stable near-perfect performance across a wide range of regularization strengths, indicating that classification accuracy is not dependent on model complexity.
 
 ---
 
-## Tools
-- R
-- randomForest
-- caret
-- pROC
-- ggplot2
+## Interpretation
+
+- A single CpG site (cg16601494) shows a strong and non-overlapping methylation difference between tumor and normal tissue
+- Consistent feature selection across LASSO and Elastic Net demonstrates robustness
+- Results reflect a genuine biological signal rather than overfitting
 
 ---
 
-## Author
-Enock Kumi Ackaah  
-Bioinformatics & Statistical Genomics
+## Visualization
+
+- Boxplots of methylation beta values for selected CpG sites
+- Clear separation between tumor and normal tissue
+- Visual confirmation of statistical findings
+
+---
+
+## Software and Tools
+
+- **R**
+- **Bioconductor**
+  - GEOquery
+- **glmnet**
+- Base R functions for preprocessing, modeling, and visualization
+
+---
+
+## Reproducibility
+
+All preprocessing, modeling, and evaluation steps are fully scripted and reproducible. Intermediate datasets (cleaned methylation matrices and outcome labels) are saved as RDS files to ensure consistency across analysis stages.
+
+---
+
+## Ethical Considerations
+
+All data used in this project are publicly available and fully de-identified. No human subjects were directly involved in this research.
